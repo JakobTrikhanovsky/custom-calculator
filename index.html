@@ -49,10 +49,17 @@
     }
 
     .answer {
-        font-size: 64px;
+        font-size: 48px;
         font-weight: 500;
         color: white;
         word-break: break-all;
+        text-align: right;
+    }
+
+    .answer a {
+        color: #ff7777;
+        text-decoration: underline;
+        cursor: pointer;
     }
 
     .top-row,
@@ -137,7 +144,7 @@
 
     @media (max-width: 800px) {
         .answer {
-            font-size: 45px;
+            font-size: 30px;
         }
 
         .grid {
@@ -238,8 +245,8 @@
     const expressionDisplay = document.getElementById("expression");
     const answerDisplay = document.getElementById("answer");
 
-    function updateDisplay() {
-        expressionDisplay.textContent = expression
+    function prettyExpression(text) {
+        return text
             .replaceAll("Math.PI", "π")
             .replaceAll("Math.E", "e")
             .replaceAll("Math.sqrt", "√")
@@ -248,6 +255,10 @@
             .replaceAll("Math.exp", "exp")
             .replaceAll("*", "×")
             .replaceAll("/", "÷");
+    }
+
+    function updateDisplay() {
+        expressionDisplay.textContent = prettyExpression(expression);
 
         if (expression === "") {
             answerDisplay.textContent = "0";
@@ -283,8 +294,27 @@
         updateDisplay();
     }
 
+    function isSecretExpression(raw) {
+        const cleaned = raw.replace(/\s+/g, "");
+
+        return cleaned === "9652*147+42" ||
+               cleaned === "(9652*147)+42" ||
+               cleaned === "9652×147+42";
+    }
+
+    function showSecretError() {
+        expressionDisplay.textContent = "9652 × 147 + 42";
+        answerDisplay.innerHTML =
+            '<a href="secret.html">Server 505 error- result overflow: please visit sometime later</a>';
+    }
+
     function calculate() {
         try {
+            if (isSecretExpression(expression)) {
+                showSecretError();
+                return;
+            }
+
             let openBrackets = (expression.match(/\(/g) || []).length;
             let closeBrackets = (expression.match(/\)/g) || []).length;
 
@@ -302,15 +332,7 @@
 
             result = Math.round(result * 100000000000) / 100000000000;
             answerDisplay.textContent = result;
-            expressionDisplay.textContent = expression
-                .replaceAll("Math.PI", "π")
-                .replaceAll("Math.E", "e")
-                .replaceAll("Math.sqrt", "√")
-                .replaceAll("Math.log10", "log")
-                .replaceAll("Math.log", "ln")
-                .replaceAll("Math.exp", "exp")
-                .replaceAll("*", "×")
-                .replaceAll("/", "÷");
+            expressionDisplay.textContent = prettyExpression(expression);
 
             expression = String(result);
         } catch {
