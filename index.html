@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Glass Scientific Calculator</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(120deg, #151b1f, #171629, #302341);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .calculator {
+        width: 100%;
+        max-width: 1450px;
+        min-height: 100vh;
+        background: rgba(20, 25, 32, 0.78);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .display {
+        height: 200px;
+        border: 2px solid rgba(255,255,255,0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-end;
+        padding: 25px 35px;
+        overflow: hidden;
+    }
+
+    .expression {
+        font-size: 24px;
+        color: #aaa;
+        min-height: 35px;
+        word-break: break-all;
+    }
+
+    .answer {
+        font-size: 64px;
+        font-weight: 500;
+        color: white;
+        word-break: break-all;
+    }
+
+    .top-row,
+    .memory-row,
+    .menu-row {
+        display: flex;
+        align-items: center;
+        height: 70px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .top-row span,
+    .memory-row button,
+    .menu-row button {
+        margin-left: 45px;
+        font-size: 18px;
+    }
+
+    .memory-row button,
+    .menu-row button {
+        background: transparent;
+        color: white;
+        border: none;
+        cursor: pointer;
+        padding: 12px;
+    }
+
+    .memory-row button:disabled {
+        color: rgba(255,255,255,0.35);
+        cursor: default;
+    }
+
+    .menu-row button {
+        font-size: 19px;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        padding: 4px;
+    }
+
+    button.calc-btn {
+        height: 73px;
+        font-size: 21px;
+        border: none;
+        color: white;
+        background: rgba(255,255,255,0.08);
+        cursor: pointer;
+        border-radius: 6px;
+        transition: 0.15s;
+    }
+
+    button.calc-btn:hover {
+        background: rgba(255,255,255,0.18);
+    }
+
+    button.number {
+        background: rgba(255,255,255,0.12);
+        font-size: 27px;
+    }
+
+    button.operator {
+        background: rgba(75, 58, 95, 0.55);
+        font-size: 28px;
+    }
+
+    button.equal {
+        background: #d996ec;
+        color: #20162b;
+        font-size: 30px;
+    }
+
+    button.equal:hover {
+        background: #ebb0fb;
+    }
+
+    .disabled-look {
+        color: rgba(255,255,255,0.45) !important;
+    }
+
+    @media (max-width: 800px) {
+        .answer {
+            font-size: 45px;
+        }
+
+        .grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        button.calc-btn {
+            height: 65px;
+            font-size: 18px;
+        }
+
+        .top-row span,
+        .memory-row button,
+        .menu-row button {
+            margin-left: 18px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+
+    <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="answer" id="answer">0</div>
+    </div>
+
+    <div class="top-row">
+        <span>DEG</span>
+        <span>F-E</span>
+    </div>
+
+    <div class="memory-row">
+        <button class="disabled-look">MC</button>
+        <button class="disabled-look">MR</button>
+        <button onclick="memoryAdd()">M+</button>
+        <button onclick="memorySubtract()">M−</button>
+        <button onclick="memoryStore()">MS</button>
+    </div>
+
+    <div class="menu-row">
+        <button>◺ Trigonometry⌄</button>
+        <button>ƒ Function⌄</button>
+    </div>
+
+    <div class="grid">
+        <button class="calc-btn" onclick="square()">2ⁿᵈ</button>
+        <button class="calc-btn" onclick="insertValue('Math.PI')">π</button>
+        <button class="calc-btn" onclick="insertValue('Math.E')">e</button>
+        <button class="calc-btn" onclick="clearAll()">C</button>
+        <button class="calc-btn operator" onclick="backspace()">⌫</button>
+
+        <button class="calc-btn" onclick="square()">x²</button>
+        <button class="calc-btn" onclick="reciprocal()">¹⁄x</button>
+        <button class="calc-btn" onclick="absoluteValue()">|x|</button>
+        <button class="calc-btn" onclick="insertValue('Math.exp(')">exp</button>
+        <button class="calc-btn operator" onclick="insertOperator('%')">mod</button>
+
+        <button class="calc-btn" onclick="squareRoot()">²√x</button>
+        <button class="calc-btn" onclick="insertValue('(')">(</button>
+        <button class="calc-btn" onclick="insertValue(')')">)</button>
+        <button class="calc-btn" onclick="factorial()">n!</button>
+        <button class="calc-btn operator" onclick="insertOperator('/')">÷</button>
+
+        <button class="calc-btn" onclick="power()">xʸ</button>
+        <button class="calc-btn number" onclick="insertValue('7')">7</button>
+        <button class="calc-btn number" onclick="insertValue('8')">8</button>
+        <button class="calc-btn number" onclick="insertValue('9')">9</button>
+        <button class="calc-btn operator" onclick="insertOperator('*')">×</button>
+
+        <button class="calc-btn" onclick="insertValue('Math.pow(10,')">10ˣ</button>
+        <button class="calc-btn number" onclick="insertValue('4')">4</button>
+        <button class="calc-btn number" onclick="insertValue('5')">5</button>
+        <button class="calc-btn number" onclick="insertValue('6')">6</button>
+        <button class="calc-btn operator" onclick="insertOperator('-')">−</button>
+
+        <button class="calc-btn" onclick="insertValue('Math.log10(')">log</button>
+        <button class="calc-btn number" onclick="insertValue('1')">1</button>
+        <button class="calc-btn number" onclick="insertValue('2')">2</button>
+        <button class="calc-btn number" onclick="insertValue('3')">3</button>
+        <button class="calc-btn operator" onclick="insertOperator('+')">+</button>
+
+        <button class="calc-btn" onclick="insertValue('Math.log(')">ln</button>
+        <button class="calc-btn" onclick="toggleSign()">+/−</button>
+        <button class="calc-btn number" onclick="insertValue('0')">0</button>
+        <button class="calc-btn number" onclick="insertValue('.')">.</button>
+        <button class="calc-btn equal" onclick="calculate()">=</button>
+    </div>
+
+</div>
+
+<script>
+    let expression = "";
+    let memory = 0;
+
+    const expressionDisplay = document.getElementById("expression");
+    const answerDisplay = document.getElementById("answer");
+
+    function updateDisplay() {
+        expressionDisplay.textContent = expression
+            .replaceAll("Math.PI", "π")
+            .replaceAll("Math.E", "e")
+            .replaceAll("Math.sqrt", "√")
+            .replaceAll("Math.log10", "log")
+            .replaceAll("Math.log", "ln")
+            .replaceAll("Math.exp", "exp")
+            .replaceAll("*", "×")
+            .replaceAll("/", "÷");
+
+        if (expression === "") {
+            answerDisplay.textContent = "0";
+        }
+    }
+
+    function insertValue(value) {
+        expression += value;
+        updateDisplay();
+    }
+
+    function insertOperator(op) {
+        if (expression === "") return;
+
+        const last = expression.slice(-1);
+        if ("+-*/%".includes(last)) {
+            expression = expression.slice(0, -1) + op;
+        } else {
+            expression += op;
+        }
+
+        updateDisplay();
+    }
+
+    function clearAll() {
+        expression = "";
+        expressionDisplay.textContent = "";
+        answerDisplay.textContent = "0";
+    }
+
+    function backspace() {
+        expression = expression.slice(0, -1);
+        updateDisplay();
+    }
+
+    function calculate() {
+        try {
+            let openBrackets = (expression.match(/\(/g) || []).length;
+            let closeBrackets = (expression.match(/\)/g) || []).length;
+
+            while (closeBrackets < openBrackets) {
+                expression += ")";
+                closeBrackets++;
+            }
+
+            let result = Function('"use strict"; return (' + expression + ')')();
+
+            if (!isFinite(result)) {
+                answerDisplay.textContent = "Error";
+                return;
+            }
+
+            result = Math.round(result * 100000000000) / 100000000000;
+            answerDisplay.textContent = result;
+            expressionDisplay.textContent = expression
+                .replaceAll("Math.PI", "π")
+                .replaceAll("Math.E", "e")
+                .replaceAll("Math.sqrt", "√")
+                .replaceAll("Math.log10", "log")
+                .replaceAll("Math.log", "ln")
+                .replaceAll("Math.exp", "exp")
+                .replaceAll("*", "×")
+                .replaceAll("/", "÷");
+
+            expression = String(result);
+        } catch {
+            answerDisplay.textContent = "Error";
+        }
+    }
+
+    function square() {
+        if (expression === "") return;
+        expression = "(" + expression + ")**2";
+        calculate();
+    }
+
+    function squareRoot() {
+        if (expression === "") return;
+        expression = "Math.sqrt(" + expression + ")";
+        calculate();
+    }
+
+    function reciprocal() {
+        if (expression === "") return;
+        expression = "1/(" + expression + ")";
+        calculate();
+    }
+
+    function absoluteValue() {
+        if (expression === "") return;
+        expression = "Math.abs(" + expression + ")";
+        calculate();
+    }
+
+    function power() {
+        if (expression === "") return;
+        expression += "**";
+        updateDisplay();
+    }
+
+    function factorial() {
+        try {
+            let n = Math.floor(Function('"use strict"; return (' + expression + ')')());
+
+            if (n < 0) {
+                answerDisplay.textContent = "Error";
+                return;
+            }
+
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+
+            expressionDisplay.textContent = n + "!";
+            answerDisplay.textContent = result;
+            expression = String(result);
+        } catch {
+            answerDisplay.textContent = "Error";
+        }
+    }
+
+    function toggleSign() {
+        if (expression === "") return;
+        expression = "-(" + expression + ")";
+        calculate();
+    }
+
+    function memoryStore() {
+        try {
+            memory = Number(Function('"use strict"; return (' + expression + ')')());
+        } catch {
+            memory = 0;
+        }
+    }
+
+    function memoryAdd() {
+        try {
+            memory += Number(Function('"use strict"; return (' + expression + ')')());
+        } catch {}
+    }
+
+    function memorySubtract() {
+        try {
+            memory -= Number(Function('"use strict"; return (' + expression + ')')());
+        } catch {}
+    }
+
+    document.addEventListener("keydown", function(event) {
+        const key = event.key;
+
+        if (!isNaN(key)) insertValue(key);
+        else if (key === ".") insertValue(".");
+        else if (["+", "-", "*", "/", "%"].includes(key)) insertOperator(key);
+        else if (key === "Enter") calculate();
+        else if (key === "Backspace") backspace();
+        else if (key === "Escape") clearAll();
+        else if (key === "(" || key === ")") insertValue(key);
+    });
+</script>
+
+</body>
+</html>
