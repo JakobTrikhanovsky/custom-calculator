@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Access</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        font-family: Consolas, "Courier New", monospace;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: #000;
+        color: #00c8ff;
+        overflow: hidden;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(circle at center, rgba(0, 200, 255, 0.13), transparent 38%),
+            repeating-linear-gradient(
+                0deg,
+                rgba(0, 200, 255, 0.035),
+                rgba(0, 200, 255, 0.035) 1px,
+                transparent 1px,
+                transparent 4px
+            );
+        pointer-events: none;
+        animation: pulseBg 3s infinite alternate;
+    }
+
+    @keyframes pulseBg {
+        from { opacity: 0.65; }
+        to { opacity: 1; }
+    }
+
+    .matrix {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        opacity: 0.28;
+        pointer-events: none;
+    }
+
+    .access-wrapper {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .access-box {
+        width: 430px;
+        min-height: 270px;
+        padding: 28px;
+        border: 2px solid #00c8ff;
+        background: rgba(0, 8, 16, 0.94);
+        box-shadow:
+            0 0 18px #00c8ff,
+            inset 0 0 22px rgba(0, 200, 255, 0.18);
+        text-align: center;
+        animation: boxAppear 0.5s ease-out;
+    }
+
+    @keyframes boxAppear {
+        from {
+            transform: scale(0.92);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .label {
+        border: 1px solid rgba(0, 200, 255, 0.7);
+        padding: 8px;
+        margin-bottom: 22px;
+        font-size: 20px;
+        letter-spacing: 4px;
+        text-shadow: 0 0 12px #00c8ff;
+    }
+
+    h2 {
+        margin: 0 0 20px 0;
+        font-size: 22px;
+        color: #dff8ff;
+        text-shadow: 0 0 12px #00c8ff;
+    }
+
+    input,
+    textarea {
+        width: 100%;
+        padding: 13px;
+        margin-top: 12px;
+        background: #000;
+        border: 1px solid #00c8ff;
+        color: #00c8ff;
+        outline: none;
+        font-size: 16px;
+        box-shadow: inset 0 0 10px rgba(0, 200, 255, 0.15);
+    }
+
+    textarea {
+        height: 105px;
+        resize: none;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: rgba(0, 200, 255, 0.45);
+    }
+
+    button {
+        margin-top: 22px;
+        padding: 12px 34px;
+        background: #00c8ff;
+        color: #001018;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 16px;
+        box-shadow: 0 0 15px #00c8ff;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.04);
+        box-shadow: 0 0 28px #00c8ff;
+    }
+
+    .tiny {
+        margin-top: 14px;
+        font-size: 13px;
+        color: rgba(0, 200, 255, 0.65);
+    }
+
+    .warning {
+        margin-top: 15px;
+        color: #ff4444;
+        text-shadow: 0 0 10px #ff4444;
+        min-height: 18px;
+        font-size: 14px;
+    }
+
+    .loading-bar {
+        width: 100%;
+        height: 12px;
+        margin-top: 25px;
+        border: 1px solid #00c8ff;
+        overflow: hidden;
+    }
+
+    .loading-fill {
+        width: 0%;
+        height: 100%;
+        background: #00c8ff;
+        box-shadow: 0 0 20px #00c8ff;
+        animation: loading 6s linear forwards;
+    }
+
+    @keyframes loading {
+        from { width: 0%; }
+        to { width: 100%; }
+    }
+
+    .terminal-lines {
+        text-align: left;
+        font-size: 13px;
+        margin-top: 18px;
+        line-height: 1.7;
+        color: rgba(0, 200, 255, 0.8);
+    }
+
+    .final-link {
+        display: inline-block;
+        margin-top: 28px;
+        color: #ffffff;
+        font-size: 22px;
+        text-decoration: none;
+        border: 1px solid #00c8ff;
+        padding: 14px 22px;
+        box-shadow: 0 0 25px #00c8ff;
+    }
+
+    .final-link:hover {
+        background: #00c8ff;
+        color: black;
+    }
+
+    .error-page {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: #fff;
+        color: #202124;
+        font-family: Arial, sans-serif;
+        padding: 80px;
+        overflow: auto;
+    }
+
+    .error-content {
+        max-width: 720px;
+        margin: 70px auto;
+    }
+
+    .coffee {
+        font-size: 70px;
+        margin-bottom: 20px;
+    }
+
+    .error-page h1 {
+        font-size: 32px;
+        font-weight: 400;
+        margin-bottom: 12px;
+    }
+
+    .error-page p {
+        font-size: 16px;
+        color: #5f6368;
+        line-height: 1.6;
+    }
+
+    .error-code {
+        margin-top: 25px;
+        font-size: 13px;
+        color: #777;
+    }
+</style>
+</head>
+
+<body>
+
+<canvas class="matrix" id="matrix"></canvas>
+
+<div class="access-wrapper" id="accessWrapper">
+    <div class="access-box" id="accessBox">
+        <div class="label">USER</div>
+        <h2>enter your password</h2>
+
+        <input type="password" id="passwordInput" placeholder="password">
+        <button onclick="checkFirstPassword()">OKAY</button>
+
+        <div class="warning" id="warningText"></div>
+        <div class="tiny">Maximum 2 incorrect attempts allowed</div>
+    </div>
+</div>
+
+<div class="error-page" id="errorPage">
+    <div class="error-content">
+        <div class="coffee">☕</div>
+        <h1>404. That’s an error.</h1>
+        <p>The requested webpage does not exist.</p>
+        <p>Are you lost?</p>
+        <p>The server could not find the page you were trying to access. Please check the address and try again.</p>
+        <div class="error-code">Error code: 404_NOT_FOUND</div>
+    </div>
+</div>
+
+<script>
+    const CORRECT_PASSWORD = "bluekey505";
+
+    let wrongAttempts = 0;
+    let storedName = "";
+    let storedReason = "";
+
+    history.pushState(null, "", location.href);
+    window.addEventListener("popstate", function () {
+        history.pushState(null, "", location.href);
+    });
+
+    function showError404() {
+        document.body.style.background = "#fff";
+        document.body.style.overflow = "auto";
+
+        document.getElementById("matrix").style.display = "none";
+        document.getElementById("accessWrapper").style.display = "none";
+        document.getElementById("errorPage").style.display = "block";
+
+        history.pushState(null, "", location.href);
+    }
+
+    function wrongPassword() {
+        wrongAttempts++;
+
+        if (wrongAttempts >= 2) {
+            showError404();
+            return;
+        }
+
+        document.getElementById("warningText").textContent =
+            "Incorrect password. Final attempt remaining.";
+    }
+
+    function checkFirstPassword() {
+        const value = document.getElementById("passwordInput").value;
+
+        if (value === CORRECT_PASSWORD) {
+            askName();
+        } else {
+            wrongPassword();
+        }
+    }
+
+    function askName() {
+        document.getElementById("accessBox").innerHTML = `
+            <div class="label">USER</div>
+            <h2>what is your name?</h2>
+
+            <input type="text" id="nameInput" placeholder="enter your name">
+            <button onclick="saveName()">OKAY</button>
+
+            <div class="tiny">Identity record will be verified</div>
+        `;
+    }
+
+    function saveName() {
+        const name = document.getElementById("nameInput").value.trim();
+
+        if (name.length < 1) {
+            return;
+        }
+
+        storedName = name;
+        askSecondPassword();
+    }
+
+    function askSecondPassword() {
+        document.getElementById("accessBox").innerHTML = `
+            <div class="label">USER</div>
+            <h2>enter the same password</h2>
+
+            <input type="password" id="secondPasswordInput" placeholder="password">
+            <button onclick="checkSecondPassword()">OKAY</button>
+
+            <div class="warning" id="secondWarning"></div>
+            <div class="tiny">Mismatch will terminate the session</div>
+        `;
+    }
+
+    function checkSecondPassword() {
+        const value = document.getElementById("secondPasswordInput").value;
+
+        if (value === CORRECT_PASSWORD) {
+            askReason();
+        } else {
+            showError404();
+        }
+    }
+
+    function askReason() {
+        document.getElementById("accessBox").innerHTML = `
+            <div class="label">USER</div>
+            <h2>why do you want to be here?</h2>
+
+            <textarea id="reasonInput" placeholder="type your explanation here"></textarea>
+            <button onclick="saveReason()">OKAY</button>
+
+            <div class="tiny">Response length verification active</div>
+        `;
+    }
+
+    function saveReason() {
+        const reason = document.getElementById("reasonInput").value.trim();
+
+        if (reason.length < 1) {
+            return;
+        }
+
+        storedReason = reason;
+        showLoading();
+    }
+
+    function showLoading() {
+        document.getElementById("accessBox").innerHTML = `
+            <div class="label">ACCESS</div>
+            <h2>verifying secure gateway...</h2>
+
+            <div class="loading-bar">
+                <div class="loading-fill"></div>
+            </div>
+
+            <div class="terminal-lines" id="terminalLines">
+                > user accepted: ${escapeHtml(storedName)}<br>
+                > scanning response packet...<br>
+                > checking session checksum...<br>
+                > opening encrypted route...
+            </div>
+        `;
+
+        setTimeout(showFinalLink, 6200);
+    }
+
+    function showFinalLink() {
+        document.getElementById("accessBox").innerHTML = `
+            <div class="label">ACCESS GRANTED</div>
+            <h2>secure link unlocked</h2>
+
+            <a class="final-link" href="https://lichess.org/" target="_blank">
+                https://lichess.org/
+            </a>
+
+            <div class="tiny">Route opened successfully</div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, function(match) {
+            const map = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            };
+            return map[match];
+        });
+    }
+
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    resizeCanvas();
+
+    const letters = "01ACCESSGRANTEDLOCKEDSERVER404505BLUEKEY";
+    const fontSize = 16;
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#00c8ff";
+        ctx.font = fontSize + "px Consolas";
+
+        for (let i = 0; i < drops.length; i++) {
+            const char = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+
+            drops[i]++;
+        }
+    }
+
+    setInterval(drawMatrix, 40);
+
+    window.addEventListener("resize", () => {
+        resizeCanvas();
+        columns = Math.floor(canvas.width / fontSize);
+        drops = Array(columns).fill(1);
+    });
+</script>
+
+</body>
+</html>
