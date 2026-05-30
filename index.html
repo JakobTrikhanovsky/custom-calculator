@@ -255,7 +255,25 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDCzNFFzag7EVLEbClxV5Ti4dGZJ170oF0",
+      authDomain: "custom-calculator-link.firebaseapp.com",
+      databaseURL: "https://custom-calculator-link-default-rtdb.firebaseio.com",
+      projectId: "custom-calculator-link",
+      storageBucket: "custom-calculator-link.firebasestorage.app",
+      messagingSenderId: "388422816",
+      appId: "1:388422816:web:fb366e13d3ba542028fdc5",
+      measurementId: "G-69P0M3REX0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const meetingLinkRef = database.ref("currentMeetingLink");
+
     const expressionBox = document.getElementById("expression");
     const resultBox = document.getElementById("result");
 
@@ -266,20 +284,13 @@
 
     const FAKE_ERROR_TEXT = "Server 505 error- no result found- please reload later";
     const LINK_PASSWORD = "link1234";
+    const MODERATOR_PASSWORD = "moderator1234";
 
     const SECRET_EXPRESSIONS = {
-      "89*71": {
-        clickable: false
-      },
-      "9652*147+42": {
-        clickable: true
-      },
-      "1*1*1*1+76": {
-        clickable: false
-      },
-      "562*97+196": {
-        clickable: false
-      }
+      "89*71": { clickable: false },
+      "9652*147+42": { clickable: true },
+      "1*1*1*1+76": { clickable: false },
+      "562*97+196": { clickable: false }
     };
 
     function normalizeExpression(value) {
@@ -442,7 +453,7 @@
             box-shadow: 0 0 30px rgba(0, 140, 255, 0.35);
             border-radius: 18px;
             padding: 34px 32px;
-            width: min(620px, 92vw);
+            width: min(660px, 92vw);
             backdrop-filter: blur(4px);
           ">
             <h2 style="
@@ -545,38 +556,116 @@
       const input = document.getElementById("linkPasswordInput");
       const typed = String(input.value || "").trim();
 
-      if (typed === LINK_PASSWORD) {
+      if (typed === MODERATOR_PASSWORD) {
+        showModeratorLinkPoster();
+      } else if (typed === LINK_PASSWORD) {
         showCurrentMeetingLink();
       } else {
         location.replace("404.html");
       }
     }
 
-    async function showCurrentMeetingLink() {
+    function showModeratorLinkPoster() {
+      const area = document.getElementById("passwordArea");
+      const box = document.getElementById("meetingLinkBox");
+
+      area.style.display = "none";
+      box.style.display = "block";
+
+      box.innerHTML = `
+        <div style="
+          font-size: 21px;
+          margin-bottom: 14px;
+          color: #eaf6ff;
+          text-shadow: 0 0 10px rgba(0,180,255,0.7);
+          font-weight: bold;
+        ">
+          Post link for all to see
+        </div>
+
+        <input id="moderatorLinkInput" placeholder="Paste meeting link here" style="
+          width: min(480px, 86vw);
+          padding: 13px;
+          font-size: 16px;
+          border: 1px solid #50cfff;
+          border-radius: 8px;
+          color: #eaf6ff;
+          background: rgba(0,0,0,0.72);
+          outline: none;
+          box-shadow: 0 0 12px rgba(0, 170, 255, 0.28);
+        ">
+
+        <br><br>
+
+        <button onclick="saveModeratorLink()" style="
+          padding: 10px 24px;
+          font-size: 15px;
+          cursor: pointer;
+          border: 1px solid #50cfff;
+          border-radius: 8px;
+          background: rgba(5,22,35,0.9);
+          color: #dff8ff;
+          font-weight: bold;
+          box-shadow: 0 0 14px rgba(0, 170, 255, 0.4);
+        ">
+          SAVE LINK
+        </button>
+
+        <div id="saveStatus" style="
+          margin-top: 14px;
+          min-height: 22px;
+          color: #dff8ff;
+        "></div>
+      `;
+
+      setTimeout(() => {
+        const input = document.getElementById("moderatorLinkInput");
+        if (input) input.focus();
+      }, 50);
+    }
+
+    function saveModeratorLink() {
+      const input = document.getElementById("moderatorLinkInput");
+      const status = document.getElementById("saveStatus");
+      const link = String(input.value || "").trim();
+
+      if (!link.startsWith("http://") && !link.startsWith("https://")) {
+        status.innerText = "Enter a valid link.";
+        return;
+      }
+
+      status.innerText = "Saving...";
+
+      meetingLinkRef.set({
+        link: link,
+        updatedAt: Date.now()
+      }).then(() => {
+        status.innerText = "Saved.";
+      }).catch(() => {
+        status.innerText = "Could not save.";
+      });
+    }
+
+    function showCurrentMeetingLink() {
       const box = document.getElementById("meetingLinkBox");
       const area = document.getElementById("passwordArea");
 
       area.style.display = "none";
       box.style.display = "block";
+      box.innerText = "Loading meeting link...";
 
-      try {
-        box.innerText = "Loading meeting link...";
+      meetingLinkRef.once("value").then(snapshot => {
+        const data = snapshot.val();
 
-        const response = await fetch("temp_link.txt?nocache=" + Date.now(), {
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error("Could not load temp_link.txt");
+        if (!data || !data.link) {
+          box.innerText = "No meeting link has been posted yet.";
+          return;
         }
 
-        const link = (await response.text()).trim();
-
-        box.innerText = link || "No temporary meeting link found.";
-
-      } catch {
-        box.innerText = "Temporary meeting link unavailable. Please reload later.";
-      }
+        box.innerText = data.link;
+      }).catch(() => {
+        box.innerText = "Meeting link unavailable. Please reload later.";
+      });
     }
 
     document.addEventListener("keydown", function(event) {
