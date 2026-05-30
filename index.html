@@ -265,6 +265,7 @@
     let justCalculated = false;
 
     const FAKE_ERROR_TEXT = "Server 505 error- no result found- please reload later";
+    const LINK_PASSWORD = "link1234";
 
     const SECRET_EXPRESSIONS = {
       "89*71": {
@@ -412,6 +413,8 @@
     }
 
     function showMeetingStartPage() {
+      history.replaceState(null, "", location.pathname);
+
       document.body.innerHTML = `
         <div style="
           background: white;
@@ -430,7 +433,7 @@
             To start the meeting, please click the button below
           </h2>
 
-          <button onclick="showCurrentMeetingLink()" style="
+          <button onclick="showPasswordBox()" style="
             padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
@@ -443,6 +446,36 @@
             START MEETING
           </button>
 
+          <div id="passwordArea" style="
+            margin-top: 22px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+          ">
+            <input id="linkPasswordInput" type="password" placeholder="Enter password" style="
+              width: 260px;
+              padding: 12px;
+              font-size: 16px;
+              border: 1px solid #aaa;
+              border-radius: 6px;
+              outline: none;
+            ">
+
+            <button onclick="checkLinkPassword()" style="
+              padding: 10px 22px;
+              font-size: 15px;
+              cursor: pointer;
+              border: 1px solid #333;
+              border-radius: 6px;
+              background: #f2f2f2;
+              color: black;
+              box-shadow: none;
+            ">
+              SUBMIT
+            </button>
+          </div>
+
           <div id="meetingLinkBox" style="
             margin-top: 24px;
             font-size: 18px;
@@ -452,13 +485,47 @@
             border: 1px solid #ddd;
             padding: 12px;
             min-height: 45px;
+            display: none;
           "></div>
         </div>
       `;
+
+      window.onpopstate = function () {
+        location.replace("404.html");
+      };
+    }
+
+    function showPasswordBox() {
+      const area = document.getElementById("passwordArea");
+      area.style.display = "flex";
+
+      const input = document.getElementById("linkPasswordInput");
+      input.focus();
+
+      input.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          checkLinkPassword();
+        }
+      });
+    }
+
+    function checkLinkPassword() {
+      const input = document.getElementById("linkPasswordInput");
+      const typed = String(input.value || "").trim();
+
+      if (typed === LINK_PASSWORD) {
+        showCurrentMeetingLink();
+      } else {
+        location.replace("404.html");
+      }
     }
 
     async function showCurrentMeetingLink() {
       const box = document.getElementById("meetingLinkBox");
+      const area = document.getElementById("passwordArea");
+
+      area.style.display = "none";
+      box.style.display = "block";
 
       try {
         box.innerText = "Loading meeting link...";
