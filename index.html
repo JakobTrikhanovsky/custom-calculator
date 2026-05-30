@@ -7,402 +7,311 @@
 
   <style>
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
       font-family: "Segoe UI", Arial, sans-serif;
+      user-select: none;
     }
 
     html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #171217;
-      color: white;
+      background: radial-gradient(circle at top, #20242f, #090b10 70%);
     }
 
     body {
       display: flex;
-      flex-direction: column;
-    }
-
-    .title-bar {
-      height: 34px;
-      display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 0 14px;
-      font-size: 14px;
-      color: #f2f2f2;
-      flex-shrink: 0;
-    }
-
-    .main {
-      height: calc(100vh - 34px);
-      display: grid;
-      grid-template-columns: minmax(520px, 1fr) 380px;
-      overflow: hidden;
+      justify-content: center;
     }
 
     .calculator {
+      width: min(420px, 94vw);
+      height: min(720px, 94vh);
+      background: linear-gradient(145deg, #1c1f27, #101218);
+      border-radius: 34px;
+      padding: 22px;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.65),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-      padding: 10px 14px 8px;
-    }
-
-    .top-row {
-      height: 42px;
-      display: flex;
-      align-items: center;
       gap: 18px;
+    }
+
+    .top {
+      height: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #bfc5d2;
+      font-size: 14px;
+      letter-spacing: 0.5px;
       flex-shrink: 0;
     }
 
-    .menu {
-      font-size: 28px;
-      line-height: 1;
-      cursor: default;
-    }
-
-    .mode {
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    .display {
-      height: 130px;
-      border: 2px solid #ddd;
-      border-radius: 4px;
+    .screen {
+      height: 145px;
+      background: linear-gradient(145deg, #d7e0d3, #aebaa8);
+      border-radius: 22px;
+      padding: 18px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: flex-end;
-      padding: 0 20px;
-      font-size: 56px;
-      font-weight: 500;
-      margin-bottom: 12px;
-      flex-shrink: 0;
+      align-items: flex-end;
+      box-shadow:
+        inset 0 4px 10px rgba(0,0,0,0.35),
+        inset 0 -2px 4px rgba(255,255,255,0.3);
       overflow: hidden;
-    }
-
-    .mini-options {
-      height: 44px;
-      display: flex;
-      align-items: center;
-      gap: 56px;
-      font-size: 16px;
-      color: #f1f1f1;
-      flex-shrink: 0;
-      padding-left: 14px;
-    }
-
-    .memory-row {
-      height: 46px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
       flex-shrink: 0;
     }
 
-    .memory-row button {
-      background: transparent;
-      border: none;
-      color: #f3f3f3;
-      font-size: 15px;
-      cursor: pointer;
+    .expression {
+      width: 100%;
+      min-height: 26px;
+      text-align: right;
+      font-size: 20px;
+      color: rgba(20, 28, 20, 0.65);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
-    .memory-row button.disabled {
-      color: rgba(255,255,255,0.35);
+    .result {
+      width: 100%;
+      text-align: right;
+      font-family: "Consolas", monospace;
+      font-size: clamp(38px, 9vw, 58px);
+      color: #162016;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
-    .section-row {
-      height: 52px;
-      display: flex;
-      align-items: center;
-      gap: 48px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      flex-shrink: 0;
-      padding-left: 8px;
-      font-size: 17px;
-    }
-
-    .buttons {
+    .keys {
       flex: 1;
       min-height: 0;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(7, 1fr);
-      gap: 4px;
-      padding-top: 5px;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 12px;
     }
 
     button {
       border: none;
-      border-radius: 5px;
-      background: #352c34;
-      color: #ffffff;
-      font-size: 20px;
+      border-radius: 22px;
+      font-size: clamp(20px, 4vw, 28px);
+      font-weight: 600;
+      color: #f7f7f7;
       cursor: pointer;
+      background: linear-gradient(145deg, #323743, #20242d);
+      box-shadow:
+        0 7px 0 #11141a,
+        0 12px 20px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.12);
+      transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.1s;
     }
 
-    button:hover {
-      background: #403640;
+    button:active {
+      transform: translateY(6px);
+      box-shadow:
+        0 1px 0 #11141a,
+        0 4px 10px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.08);
     }
 
-    button.operator {
-      background: #3b2f36;
+    .clear {
+      background: linear-gradient(145deg, #e35b52, #a92e28);
+      box-shadow:
+        0 7px 0 #6f1d1a,
+        0 12px 20px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.18);
     }
 
-    button.special {
-      background: #312934;
+    .function {
+      background: linear-gradient(145deg, #7b8495, #535b6a);
+      box-shadow:
+        0 7px 0 #353b45,
+        0 12px 20px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.18);
     }
 
-    button.equal {
-      background: #d99af0;
-      color: #1c101f;
-      font-size: 28px;
+    .operator {
+      background: linear-gradient(145deg, #ffb84d, #d27a13);
+      box-shadow:
+        0 7px 0 #8c4d08,
+        0 12px 20px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.22);
     }
 
-    button.equal:hover {
-      background: #e0a8f4;
+    .equal {
+      background: linear-gradient(145deg, #55c878, #228b48);
+      box-shadow:
+        0 7px 0 #13572c,
+        0 12px 20px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.22);
     }
 
-    .history {
-      border-left: 1px solid rgba(255,255,255,0.08);
-      padding: 26px 24px;
-      overflow: hidden;
+    .zero {
+      grid-column: span 2;
     }
 
-    .history-tabs {
-      display: flex;
-      gap: 32px;
-      font-size: 16px;
-      margin-bottom: 26px;
-    }
-
-    .history-tabs span:first-child {
-      border-bottom: 3px solid #d99af0;
-      padding-bottom: 10px;
-    }
-
-    .history-empty {
-      font-size: 17px;
-      color: #f5f5f5;
-    }
-
-    @media (max-width: 1050px) {
-      .main {
-        grid-template-columns: 1fr;
+    @media (max-height: 620px) {
+      .calculator {
+        height: 96vh;
+        gap: 10px;
+        padding: 16px;
+        border-radius: 24px;
       }
 
-      .history {
-        display: none;
-      }
-    }
-
-    @media (max-height: 760px) {
-      .display {
+      .screen {
         height: 105px;
-        font-size: 48px;
+        border-radius: 18px;
       }
 
-      .top-row {
-        height: 36px;
-      }
-
-      .mini-options {
-        height: 34px;
-      }
-
-      .memory-row {
-        height: 38px;
-      }
-
-      .section-row {
-        height: 42px;
+      .keys {
+        gap: 8px;
       }
 
       button {
-        font-size: 18px;
+        border-radius: 16px;
+      }
+
+      .top {
+        height: 20px;
+        font-size: 12px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="title-bar">
-    <span>🧮</span>
-    <span>Calculator</span>
-  </div>
+  <div class="calculator">
+    <div class="top">
+      <span>CASIO</span>
+      <span>CALCULATOR</span>
+    </div>
 
-  <div class="main">
-    <section class="calculator">
-      <div class="top-row">
-        <div class="menu">☰</div>
-        <div class="mode">Scientific</div>
-      </div>
+    <div class="screen">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
 
-      <div class="display" id="display">0</div>
+    <div class="keys">
+      <button class="clear" onclick="clearAll()">AC</button>
+      <button class="function" onclick="backspace()">⌫</button>
+      <button class="function" onclick="append('%')">%</button>
+      <button class="operator" onclick="append('/')">÷</button>
 
-      <div class="mini-options">
-        <span>DEG</span>
-        <span>F-E</span>
-      </div>
+      <button onclick="append('7')">7</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('9')">9</button>
+      <button class="operator" onclick="append('*')">×</button>
 
-      <div class="memory-row">
-        <button class="disabled">MC</button>
-        <button class="disabled">MR</button>
-        <button>M+</button>
-        <button>M−</button>
-        <button>MS</button>
-      </div>
+      <button onclick="append('4')">4</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('6')">6</button>
+      <button class="operator" onclick="append('-')">−</button>
 
-      <div class="section-row">
-        <span>△ Trigonometry⌄</span>
-        <span>ƒ Function⌄</span>
-      </div>
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button class="operator" onclick="append('+')">+</button>
 
-      <div class="buttons">
-        <button class="special">2ⁿᵈ</button>
-        <button class="special">π</button>
-        <button class="special">e</button>
-        <button class="special" onclick="clearDisplay()">C</button>
-        <button class="special" onclick="backspace()">⌫</button>
-
-        <button class="special" onclick="appendValue('**2')">x²</button>
-        <button class="special" onclick="appendValue('1/')">¹⁄ₓ</button>
-        <button class="special" onclick="appendValue('Math.abs(')">|x|</button>
-        <button class="special" onclick="appendValue('Math.exp(')">exp</button>
-        <button class="operator" onclick="appendValue('%')">mod</button>
-
-        <button class="special" onclick="appendValue('Math.sqrt(')">²√x</button>
-        <button onclick="appendValue('(')">(</button>
-        <button onclick="appendValue(')')">)</button>
-        <button class="special" onclick="factorial()">n!</button>
-        <button class="operator" onclick="appendValue('/')">÷</button>
-
-        <button class="special" onclick="appendValue('**')">xʸ</button>
-        <button onclick="appendValue('7')">7</button>
-        <button onclick="appendValue('8')">8</button>
-        <button onclick="appendValue('9')">9</button>
-        <button class="operator" onclick="appendValue('*')">×</button>
-
-        <button class="special" onclick="appendValue('10**')">10ˣ</button>
-        <button onclick="appendValue('4')">4</button>
-        <button onclick="appendValue('5')">5</button>
-        <button onclick="appendValue('6')">6</button>
-        <button class="operator" onclick="appendValue('-')">−</button>
-
-        <button class="special" onclick="appendValue('Math.log10(')">log</button>
-        <button onclick="appendValue('1')">1</button>
-        <button onclick="appendValue('2')">2</button>
-        <button onclick="appendValue('3')">3</button>
-        <button class="operator" onclick="appendValue('+')">+</button>
-
-        <button class="special" onclick="appendValue('Math.log(')">ln</button>
-        <button onclick="toggleSign()">+/−</button>
-        <button onclick="appendValue('0')">0</button>
-        <button onclick="appendValue('.')">.</button>
-        <button class="equal" onclick="calculate()">=</button>
-      </div>
-    </section>
-
-    <aside class="history">
-      <div class="history-tabs">
-        <span>History</span>
-        <span>Memory</span>
-      </div>
-
-      <div class="history-empty">There’s no history yet.</div>
-    </aside>
+      <button class="zero" onclick="append('0')">0</button>
+      <button onclick="append('.')">.</button>
+      <button class="equal" onclick="calculate()">=</button>
+    </div>
   </div>
 
   <script>
-    const display = document.getElementById("display");
+    const expressionBox = document.getElementById("expression");
+    const resultBox = document.getElementById("result");
+
     let expression = "";
 
-    function updateDisplay() {
-      display.textContent = expression || "0";
+    /*
+      SECRET SETTINGS
+      Type 12345 and press =
+      Change the link below to your final secret link.
+    */
+    const SECRET_OPERATION = "12345";
+    const SECRET_LINK = "https://lichess.org";
+
+    function updateScreen() {
+      expressionBox.textContent = expression;
+      resultBox.textContent = expression || "0";
     }
 
-    function appendValue(value) {
-      if (expression === "Error") expression = "";
+    function append(value) {
+      if (resultBox.textContent === "Error") {
+        expression = "";
+      }
+
       expression += value;
-      updateDisplay();
+      updateScreen();
     }
 
-    function clearDisplay() {
+    function clearAll() {
       expression = "";
-      updateDisplay();
+      expressionBox.textContent = "";
+      resultBox.textContent = "0";
     }
 
     function backspace() {
       expression = expression.slice(0, -1);
-      updateDisplay();
+      updateScreen();
     }
 
     function calculate() {
-      try {
-        let result = Function('"use strict"; return (' + expression + ')')();
-
-        if (!isFinite(result)) {
-          expression = "Error";
-        } else {
-          expression = String(Number(result.toFixed(10)));
-        }
-      } catch {
-        expression = "Error";
-      }
-
-      updateDisplay();
-    }
-
-    function toggleSign() {
       if (!expression) return;
 
-      if (expression.startsWith("-")) {
-        expression = expression.slice(1);
-      } else {
-        expression = "-" + expression;
+      if (expression === SECRET_OPERATION) {
+        expressionBox.textContent = "ACCESS GRANTED";
+        resultBox.textContent = "OPENING";
+        setTimeout(() => {
+          window.location.href = SECRET_LINK;
+        }, 700);
+        return;
       }
 
-      updateDisplay();
-    }
-
-    function factorial() {
       try {
-        let n = Number(expression);
+        let cleanExpression = expression.replace(/%/g, "/100");
+        let answer = Function('"use strict"; return (' + cleanExpression + ')')();
 
-        if (!Number.isInteger(n) || n < 0) {
-          expression = "Error";
-          updateDisplay();
-          return;
+        if (!Number.isFinite(answer)) {
+          throw new Error();
         }
 
-        let result = 1;
-        for (let i = 2; i <= n; i++) result *= i;
-
-        expression = String(result);
-        updateDisplay();
+        expressionBox.textContent = expression;
+        expression = String(Number(answer.toFixed(10)));
+        resultBox.textContent = expression;
       } catch {
-        expression = "Error";
-        updateDisplay();
+        expressionBox.textContent = expression;
+        resultBox.textContent = "Error";
+        expression = "";
       }
     }
 
     document.addEventListener("keydown", function(event) {
       const key = event.key;
 
-      if (!isNaN(key) || "+-*/().".includes(key)) {
-        appendValue(key);
-      } else if (key === "Enter") {
+      if (!isNaN(key) || "+-*/.%".includes(key)) {
+        append(key);
+      }
+
+      if (key === "Enter") {
         calculate();
-      } else if (key === "Backspace") {
+      }
+
+      if (key === "Backspace") {
         backspace();
-      } else if (key === "Escape") {
-        clearDisplay();
+      }
+
+      if (key === "Escape") {
+        clearAll();
       }
     });
   </script>
