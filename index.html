@@ -298,14 +298,21 @@
     }
 
     function append(value) {
-      if (value === "6" && waitingForSecretSix && SECRET_EXPRESSIONS[lastSolvedExpression]) {
+      if (
+        value === "6" &&
+        waitingForSecretSix &&
+        SECRET_EXPRESSIONS[lastSolvedExpression]
+      ) {
         showFakeServerError(SECRET_EXPRESSIONS[lastSolvedExpression].clickable);
         waitingForSecretSix = false;
         justCalculated = false;
         return;
       }
 
-      if (resultBox.textContent === "Error" || resultBox.textContent === FAKE_ERROR_TEXT) {
+      if (
+        resultBox.textContent === "Error" ||
+        resultBox.textContent === FAKE_ERROR_TEXT
+      ) {
         expression = "";
         expressionBox.textContent = "";
         resultBox.classList.remove("errorText", "clickableError");
