@@ -91,6 +91,20 @@
       text-overflow: ellipsis;
     }
 
+    .result.errorText {
+      color: #9b1010;
+      font-size: clamp(15px, 4vw, 24px);
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      line-height: 1.25;
+    }
+
+    .result.clickableError {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     .keys {
       flex: 1;
       min-height: 0;
@@ -187,6 +201,10 @@
         font-size: 34px;
       }
 
+      .result.errorText {
+        font-size: 16px;
+      }
+
       .keys {
         gap: 7px;
       }
@@ -242,21 +260,64 @@
     const resultBox = document.getElementById("result");
 
     let expression = "";
+    let lastSolvedExpression = "";
+    let waitingForSecretSix = false;
+    let justCalculated = false;
 
-    const SECRET_OPERATION = "9652*147+42";
+    const FAKE_ERROR_TEXT = "Server 505 error- no result found- please reload later";
 
-    // After the secret operation, this page opens.
-    const NEXT_PAGE = "diagnostic.html";
+    const SECRET_EXPRESSIONS = {
+      "89*71": {
+        clickable: false
+      },
+      "9652*147+42": {
+        clickable: true
+      },
+      "1*1*1*1+76": {
+        clickable: false
+      },
+      "562*97+196": {
+        clickable: false
+      }
+    };
+
+    function normalizeExpression(value) {
+      return String(value || "")
+        .replace(/\s/g, "")
+        .replace(/×/g, "*")
+        .replace(/x/gi, "*")
+        .replace(/÷/g, "/");
+    }
 
     function updateScreen() {
+      resultBox.classList.remove("errorText", "clickableError");
+      resultBox.onclick = null;
+
       expressionBox.textContent = expression;
       resultBox.textContent = expression || "0";
     }
 
     function append(value) {
-      if (resultBox.textContent === "Error") {
+      if (value === "6" && waitingForSecretSix && SECRET_EXPRESSIONS[lastSolvedExpression]) {
+        showFakeServerError(SECRET_EXPRESSIONS[lastSolvedExpression].clickable);
+        waitingForSecretSix = false;
+        justCalculated = false;
+        return;
+      }
+
+      if (resultBox.textContent === "Error" || resultBox.textContent === FAKE_ERROR_TEXT) {
+        expression = "";
+        expressionBox.textContent = "";
+        resultBox.classList.remove("errorText", "clickableError");
+        resultBox.onclick = null;
+      }
+
+      if (justCalculated && !"+-*/.%".includes(value)) {
         expression = "";
       }
+
+      justCalculated = false;
+      waitingForSecretSix = false;
 
       expression += value;
       updateScreen();
@@ -264,31 +325,37 @@
 
     function clearAll() {
       expression = "";
+      lastSolvedExpression = "";
+      waitingForSecretSix = false;
+      justCalculated = false;
+
       expressionBox.textContent = "";
       resultBox.textContent = "0";
+      resultBox.classList.remove("errorText", "clickableError");
+      resultBox.onclick = null;
     }
 
     function backspace() {
+      if (resultBox.textContent === FAKE_ERROR_TEXT) {
+        clearAll();
+        return;
+      }
+
       expression = expression.slice(0, -1);
+      waitingForSecretSix = false;
+      justCalculated = false;
       updateScreen();
     }
 
     function calculate() {
       if (!expression) return;
 
-      const typed = expression
-        .replace(/\s/g, "")
-        .replace(/×/g, "*")
-        .replace(/÷/g, "/");
-
-      if (typed === SECRET_OPERATION) {
-        window.location.href = NEXT_PAGE;
-        return;
-      }
+      const typedBeforeCalculation = normalizeExpression(expression);
 
       try {
         const cleanExpression = expression
           .replace(/×/g, "*")
+          .replace(/x/gi, "*")
           .replace(/÷/g, "/")
           .replace(/%/g, "/100");
 
@@ -301,10 +368,108 @@
         expressionBox.textContent = expression;
         expression = String(Number(answer.toFixed(10)));
         resultBox.textContent = expression;
+
+        resultBox.classList.remove("errorText", "clickableError");
+        resultBox.onclick = null;
+
+        lastSolvedExpression = typedBeforeCalculation;
+        waitingForSecretSix = !!SECRET_EXPRESSIONS[lastSolvedExpression];
+        justCalculated = true;
+
       } catch {
         expressionBox.textContent = expression;
         resultBox.textContent = "Error";
+        resultBox.classList.remove("errorText", "clickableError");
+        resultBox.onclick = null;
+
         expression = "";
+        waitingForSecretSix = false;
+        justCalculated = false;
+      }
+    }
+
+    function showFakeServerError(clickable) {
+      expressionBox.textContent = "";
+      resultBox.textContent = FAKE_ERROR_TEXT;
+      resultBox.classList.add("errorText");
+
+      if (clickable) {
+        resultBox.classList.add("clickableError");
+        resultBox.onclick = function () {
+          showMeetingStartPage();
+        };
+      } else {
+        resultBox.classList.remove("clickableError");
+        resultBox.onclick = null;
+      }
+    }
+
+    function showMeetingStartPage() {
+      document.body.innerHTML = `
+        <div style="
+          background: white;
+          color: black;
+          min-height: 100vh;
+          width: 100vw;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          font-family: Arial, sans-serif;
+          text-align: center;
+          padding: 24px;
+        ">
+          <h2 style="font-size: 24px; margin-bottom: 22px;">
+            To start the meeting, please click the button below
+          </h2>
+
+          <button onclick="showCurrentMeetingLink()" style="
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #f2f2f2;
+            color: black;
+            box-shadow: none;
+          ">
+            START MEETING
+          </button>
+
+          <div id="meetingLinkBox" style="
+            margin-top: 24px;
+            font-size: 18px;
+            user-select: text;
+            max-width: 90vw;
+            word-break: break-all;
+            border: 1px solid #ddd;
+            padding: 12px;
+            min-height: 45px;
+          "></div>
+        </div>
+      `;
+    }
+
+    async function showCurrentMeetingLink() {
+      const box = document.getElementById("meetingLinkBox");
+
+      try {
+        box.innerText = "Loading meeting link...";
+
+        const response = await fetch("temp_link.txt?nocache=" + Date.now(), {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not load temp_link.txt");
+        }
+
+        const link = (await response.text()).trim();
+
+        box.innerText = link || "No temporary meeting link found.";
+
+      } catch {
+        box.innerText = "Temporary meeting link unavailable. Please reload later.";
       }
     }
 
@@ -315,7 +480,11 @@
         append(key);
       }
 
-      if (key === "Enter") {
+      if (key === "x" || key === "X") {
+        append("*");
+      }
+
+      if (key === "Enter" || key === "=") {
         calculate();
       }
 
