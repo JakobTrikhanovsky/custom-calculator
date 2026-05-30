@@ -18,76 +18,96 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at top, #20242f, #090b10 70%);
+      background: radial-gradient(circle at top, #252b38, #090b10 70%);
     }
 
     body {
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
 
     .calculator {
-      width: min(420px, 94vw);
-      height: min(720px, 94vh);
-      background: linear-gradient(145deg, #1c1f27, #101218);
-      border-radius: 34px;
-      padding: 22px;
-      box-shadow:
-        0 30px 80px rgba(0, 0, 0, 0.65),
-        inset 0 1px 1px rgba(255, 255, 255, 0.08);
+      width: min(410px, 94vw);
+      height: min(690px, 94vh);
+      background: linear-gradient(145deg, #1f232d, #101218);
+      border-radius: 32px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.7),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
     }
 
     .top {
-      height: 28px;
+      height: 26px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: #bfc5d2;
+      color: #c4cad6;
       font-size: 14px;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       flex-shrink: 0;
     }
 
     .screen {
       height: 145px;
-      background: linear-gradient(145deg, #d7e0d3, #aebaa8);
+      background: linear-gradient(145deg, #d9e2d3, #aebaa8);
       border-radius: 22px;
-      padding: 18px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       align-items: flex-end;
-      box-shadow:
-        inset 0 4px 10px rgba(0,0,0,0.35),
-        inset 0 -2px 4px rgba(255,255,255,0.3);
       overflow: hidden;
+      box-shadow:
+        inset 0 5px 12px rgba(0,0,0,0.35),
+        inset 0 -2px 4px rgba(255,255,255,0.35);
       flex-shrink: 0;
     }
 
     .expression {
       width: 100%;
-      min-height: 26px;
       text-align: right;
-      font-size: 20px;
-      color: rgba(20, 28, 20, 0.65);
-      overflow: hidden;
+      font-size: 19px;
+      color: rgba(18, 30, 18, 0.65);
       white-space: nowrap;
+      overflow: hidden;
       text-overflow: ellipsis;
+      min-height: 28px;
     }
 
     .result {
       width: 100%;
       text-align: right;
-      font-family: "Consolas", monospace;
-      font-size: clamp(38px, 9vw, 58px);
-      color: #162016;
-      overflow: hidden;
+      font-family: Consolas, monospace;
+      font-size: clamp(36px, 9vw, 56px);
+      color: #132013;
       white-space: nowrap;
+      overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .secret-box {
+      display: none;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .secret-box a {
+      display: block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      background: #132013;
+      color: #caffc8;
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
 
     .keys {
@@ -96,61 +116,61 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(5, 1fr);
-      gap: 12px;
+      gap: 11px;
     }
 
     button {
       border: none;
-      border-radius: 22px;
+      border-radius: 21px;
       font-size: clamp(20px, 4vw, 28px);
-      font-weight: 600;
-      color: #f7f7f7;
+      font-weight: 700;
+      color: #ffffff;
       cursor: pointer;
-      background: linear-gradient(145deg, #323743, #20242d);
+      background: linear-gradient(145deg, #343a46, #20242d);
       box-shadow:
-        0 7px 0 #11141a,
-        0 12px 20px rgba(0,0,0,0.35),
-        inset 0 1px 1px rgba(255,255,255,0.12);
-      transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.1s;
+        0 7px 0 #10141a,
+        0 12px 18px rgba(0,0,0,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.14);
+      transition: 0.05s;
     }
 
     button:active {
       transform: translateY(6px);
       box-shadow:
-        0 1px 0 #11141a,
-        0 4px 10px rgba(0,0,0,0.35),
+        0 1px 0 #10141a,
+        0 5px 10px rgba(0,0,0,0.4),
         inset 0 1px 1px rgba(255,255,255,0.08);
     }
 
     .clear {
-      background: linear-gradient(145deg, #e35b52, #a92e28);
+      background: linear-gradient(145deg, #eb6158, #a8322c);
       box-shadow:
-        0 7px 0 #6f1d1a,
-        0 12px 20px rgba(0,0,0,0.35),
+        0 7px 0 #6b1d19,
+        0 12px 18px rgba(0,0,0,0.35),
         inset 0 1px 1px rgba(255,255,255,0.18);
     }
 
     .function {
-      background: linear-gradient(145deg, #7b8495, #535b6a);
+      background: linear-gradient(145deg, #818b9d, #535c6c);
       box-shadow:
-        0 7px 0 #353b45,
-        0 12px 20px rgba(0,0,0,0.35),
+        0 7px 0 #343b47,
+        0 12px 18px rgba(0,0,0,0.35),
         inset 0 1px 1px rgba(255,255,255,0.18);
     }
 
     .operator {
-      background: linear-gradient(145deg, #ffb84d, #d27a13);
+      background: linear-gradient(145deg, #ffb64a, #d67810);
       box-shadow:
-        0 7px 0 #8c4d08,
-        0 12px 20px rgba(0,0,0,0.35),
+        0 7px 0 #874a08,
+        0 12px 18px rgba(0,0,0,0.35),
         inset 0 1px 1px rgba(255,255,255,0.22);
     }
 
     .equal {
-      background: linear-gradient(145deg, #55c878, #228b48);
+      background: linear-gradient(145deg, #59ce7d, #238b49);
       box-shadow:
-        0 7px 0 #13572c,
-        0 12px 20px rgba(0,0,0,0.35),
+        0 7px 0 #14582d,
+        0 12px 18px rgba(0,0,0,0.35),
         inset 0 1px 1px rgba(255,255,255,0.22);
     }
 
@@ -161,27 +181,37 @@
     @media (max-height: 620px) {
       .calculator {
         height: 96vh;
-        gap: 10px;
-        padding: 16px;
+        padding: 14px;
+        gap: 9px;
         border-radius: 24px;
       }
 
+      .top {
+        height: 18px;
+        font-size: 12px;
+      }
+
       .screen {
-        height: 105px;
-        border-radius: 18px;
+        height: 100px;
+        border-radius: 16px;
+        padding: 12px;
       }
 
       .keys {
-        gap: 8px;
+        gap: 7px;
       }
 
       button {
-        border-radius: 16px;
+        border-radius: 15px;
       }
 
-      .top {
-        height: 20px;
-        font-size: 12px;
+      .expression {
+        font-size: 15px;
+        min-height: 20px;
+      }
+
+      .result {
+        font-size: 34px;
       }
     }
   </style>
@@ -197,6 +227,12 @@
     <div class="screen">
       <div class="expression" id="expression"></div>
       <div class="result" id="result">0</div>
+
+      <div class="secret-box" id="secretBox">
+        <a id="secretLink" href="https://lichess.org" target="_blank">
+          OPEN SECRET LINK
+        </a>
+      </div>
     </div>
 
     <div class="keys">
@@ -229,24 +265,32 @@
   <script>
     const expressionBox = document.getElementById("expression");
     const resultBox = document.getElementById("result");
+    const secretBox = document.getElementById("secretBox");
+    const secretLink = document.getElementById("secretLink");
 
     let expression = "";
 
     /*
-      SECRET SETTINGS
-      Type 12345 and press =
-      Change the link below to your final secret link.
+      SECRET OPERATION:
+      Type 9652*147+42 and press =
     */
-    const SECRET_OPERATION = "12345";
+    const SECRET_OPERATION = "9652*147+42";
+
+    /*
+      CHANGE YOUR SECRET LINK HERE:
+    */
     const SECRET_LINK = "https://lichess.org";
+
+    secretLink.href = SECRET_LINK;
 
     function updateScreen() {
       expressionBox.textContent = expression;
       resultBox.textContent = expression || "0";
+      secretBox.style.display = "none";
     }
 
     function append(value) {
-      if (resultBox.textContent === "Error") {
+      if (resultBox.textContent === "Error" || resultBox.textContent === "UNLOCKED") {
         expression = "";
       }
 
@@ -258,6 +302,7 @@
       expression = "";
       expressionBox.textContent = "";
       resultBox.textContent = "0";
+      secretBox.style.display = "none";
     }
 
     function backspace() {
@@ -268,18 +313,19 @@
     function calculate() {
       if (!expression) return;
 
-      if (expression === SECRET_OPERATION) {
+      const typed = expression.replace(/\s/g, "");
+
+      if (typed === SECRET_OPERATION) {
         expressionBox.textContent = "ACCESS GRANTED";
-        resultBox.textContent = "OPENING";
-        setTimeout(() => {
-          window.location.href = SECRET_LINK;
-        }, 700);
+        resultBox.textContent = "UNLOCKED";
+        secretBox.style.display = "block";
+        expression = "";
         return;
       }
 
       try {
-        let cleanExpression = expression.replace(/%/g, "/100");
-        let answer = Function('"use strict"; return (' + cleanExpression + ')')();
+        const cleanExpression = expression.replace(/%/g, "/100");
+        const answer = Function('"use strict"; return (' + cleanExpression + ')')();
 
         if (!Number.isFinite(answer)) {
           throw new Error();
