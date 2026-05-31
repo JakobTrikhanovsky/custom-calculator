@@ -137,6 +137,12 @@
         inset 0 1px 1px rgba(255, 255, 255, 0.08);
     }
 
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .clear {
       background: linear-gradient(145deg, #eb6158, #a8322c);
       box-shadow:
@@ -272,7 +278,9 @@
 
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+
     const meetingLinkRef = database.ref("currentMeetingLink");
+    const userPasswordRef = database.ref("currentUserPassword");
 
     const expressionBox = document.getElementById("expression");
     const resultBox = document.getElementById("result");
@@ -283,7 +291,13 @@
     let justCalculated = false;
 
     const FAKE_ERROR_TEXT = "Server 505 error- no result found- please reload later";
-    const LINK_PASSWORD = "link1234";
+
+    /*
+      Moderator password remains local like before.
+      User password is NOT stored here anymore.
+      User password is read from Firebase path:
+      currentUserPassword/password
+    */
     const MODERATOR_PASSWORD = "moderator1234";
 
     const SECRET_EXPRESSIONS = {
@@ -499,7 +513,7 @@
                 box-shadow: 0 0 12px rgba(0, 170, 255, 0.28);
               ">
 
-              <button onclick="checkLinkPassword()" style="
+              <button id="mainSubmitButton" onclick="checkLinkPassword()" style="
                 padding: 10px 24px;
                 font-size: 15px;
                 cursor: pointer;
@@ -554,15 +568,41 @@
 
     function checkLinkPassword() {
       const input = document.getElementById("linkPasswordInput");
+      const submitButton = document.getElementById("mainSubmitButton");
       const typed = String(input.value || "").trim();
+
+      if (!typed) return;
 
       if (typed === MODERATOR_PASSWORD) {
         showModeratorLinkPoster();
-      } else if (typed === LINK_PASSWORD) {
-        showCurrentMeetingLink();
-      } else {
-        location.replace("404.html");
+        return;
       }
+
+      input.disabled = true;
+      submitButton.disabled = true;
+      submitButton.innerText = "CHECKING...";
+
+      userPasswordRef.once("value").then(snapshot => {
+        const data = snapshot.val();
+
+        if (!data || !data.password) {
+          location.replace("404.html");
+          return;
+        }
+
+        const correctUserPassword = String(data.password);
+
+        if (typed === correctUserPassword) {
+          showCurrentMeetingLink();
+        } else {
+          location.replace("404.html");
+        }
+      }).catch(() => {
+        input.disabled = false;
+        submitButton.disabled = false;
+        submitButton.innerText = "SUBMIT";
+        alert("Could not verify password. Please try again.");
+      });
     }
 
     function showModeratorLinkPoster() {
@@ -574,48 +614,147 @@
 
       box.innerHTML = `
         <div style="
-          font-size: 21px;
-          margin-bottom: 14px;
+          font-size: 23px;
+          margin-bottom: 18px;
           color: #eaf6ff;
           text-shadow: 0 0 10px rgba(0,180,255,0.7);
           font-weight: bold;
         ">
-          Post link for all to see
+          MODERATOR CONTROL PANEL
         </div>
 
-        <input id="moderatorLinkInput" placeholder="Paste meeting link here" style="
-          width: min(480px, 86vw);
-          padding: 13px;
-          font-size: 16px;
-          border: 1px solid #50cfff;
-          border-radius: 8px;
-          color: #eaf6ff;
-          background: rgba(0,0,0,0.72);
-          outline: none;
-          box-shadow: 0 0 12px rgba(0, 170, 255, 0.28);
+        <div style="
+          border: 1px solid rgba(80, 207, 255, 0.65);
+          background: rgba(0, 0, 0, 0.55);
+          border-radius: 12px;
+          padding: 18px;
+          margin-bottom: 18px;
+          box-shadow: 0 0 14px rgba(0, 170, 255, 0.18);
         ">
+          <div style="
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #dff8ff;
+            font-weight: bold;
+          ">
+            Paste link for all users
+          </div>
 
-        <br><br>
+          <input id="moderatorLinkInput" placeholder="Paste meeting link here" style="
+            width: min(480px, 86vw);
+            padding: 13px;
+            font-size: 16px;
+            border: 1px solid #50cfff;
+            border-radius: 8px;
+            color: #eaf6ff;
+            background: rgba(0,0,0,0.72);
+            outline: none;
+            box-shadow: 0 0 12px rgba(0, 170, 255, 0.28);
+          ">
 
-        <button onclick="saveModeratorLink()" style="
-          padding: 10px 24px;
+          <br><br>
+
+          <button id="saveLinkButton" onclick="saveModeratorLink()" style="
+            padding: 10px 24px;
+            font-size: 15px;
+            cursor: pointer;
+            border: 1px solid #50cfff;
+            border-radius: 8px;
+            background: rgba(5,22,35,0.9);
+            color: #dff8ff;
+            font-weight: bold;
+            box-shadow: 0 0 14px rgba(0, 170, 255, 0.4);
+          ">
+            SAVE LINK
+          </button>
+
+          <div id="saveStatus" style="
+            margin-top: 14px;
+            min-height: 22px;
+            color: #dff8ff;
+          "></div>
+        </div>
+
+        <button id="openPasswordChangerButton" onclick="showPasswordChanger()" style="
+          padding: 11px 24px;
           font-size: 15px;
           cursor: pointer;
-          border: 1px solid #50cfff;
+          border: 1px solid #ff5757;
           border-radius: 8px;
-          background: rgba(5,22,35,0.9);
-          color: #dff8ff;
+          background: rgba(50, 5, 5, 0.92);
+          color: #ffecec;
           font-weight: bold;
-          box-shadow: 0 0 14px rgba(0, 170, 255, 0.4);
+          box-shadow: 0 0 16px rgba(255, 60, 60, 0.38);
         ">
-          SAVE LINK
+          CHANGE PASSWORD FOR ALL USERS
         </button>
 
-        <div id="saveStatus" style="
-          margin-top: 14px;
-          min-height: 22px;
-          color: #dff8ff;
-        "></div>
+        <div id="passwordChangerBox" style="
+          display: none;
+          margin-top: 18px;
+          border: 1px solid rgba(255, 87, 87, 0.72);
+          background: rgba(0, 0, 0, 0.58);
+          border-radius: 12px;
+          padding: 18px;
+          box-shadow: 0 0 14px rgba(255, 60, 60, 0.18);
+        ">
+          <div style="
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: #ffecec;
+            font-weight: bold;
+          ">
+            Enter new password for all users
+          </div>
+
+          <input id="newUserPasswordInput" type="password" placeholder="New user password" style="
+            width: min(480px, 86vw);
+            padding: 13px;
+            font-size: 16px;
+            border: 1px solid #ff5757;
+            border-radius: 8px;
+            color: #ffecec;
+            background: rgba(0,0,0,0.72);
+            outline: none;
+            box-shadow: 0 0 12px rgba(255, 60, 60, 0.24);
+          ">
+
+          <br><br>
+
+          <button id="savePasswordButton" onclick="saveUserPassword()" style="
+            padding: 10px 24px;
+            font-size: 15px;
+            cursor: pointer;
+            border: 1px solid #ff5757;
+            border-radius: 8px;
+            background: rgba(50,5,5,0.92);
+            color: #ffecec;
+            font-weight: bold;
+            box-shadow: 0 0 14px rgba(255, 60, 60, 0.35);
+          ">
+            SAVE NEW PASSWORD
+          </button>
+
+          <button onclick="hidePasswordChanger()" style="
+            padding: 10px 18px;
+            margin-left: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            border: 1px solid #777;
+            border-radius: 8px;
+            background: rgba(20,20,20,0.9);
+            color: #e6e6e6;
+            font-weight: bold;
+          ">
+            CANCEL
+          </button>
+
+          <div id="passwordSaveStatus" style="
+            margin-top: 14px;
+            min-height: 22px;
+            color: #ffecec;
+          "></div>
+        </div>
       `;
 
       setTimeout(() => {
@@ -624,9 +763,74 @@
       }, 50);
     }
 
+    function showPasswordChanger() {
+      const box = document.getElementById("passwordChangerBox");
+      const input = document.getElementById("newUserPasswordInput");
+      const status = document.getElementById("passwordSaveStatus");
+
+      box.style.display = "block";
+      status.innerText = "";
+
+      setTimeout(() => {
+        input.focus();
+      }, 50);
+
+      input.onkeydown = function(event) {
+        if (event.key === "Enter") {
+          saveUserPassword();
+        }
+      };
+    }
+
+    function hidePasswordChanger() {
+      const box = document.getElementById("passwordChangerBox");
+      const input = document.getElementById("newUserPasswordInput");
+      const status = document.getElementById("passwordSaveStatus");
+
+      input.value = "";
+      status.innerText = "";
+      box.style.display = "none";
+    }
+
+    function saveUserPassword() {
+      const input = document.getElementById("newUserPasswordInput");
+      const status = document.getElementById("passwordSaveStatus");
+      const button = document.getElementById("savePasswordButton");
+
+      const newPassword = String(input.value || "").trim();
+
+      if (newPassword.length < 4) {
+        status.innerText = "Password must be at least 4 characters.";
+        return;
+      }
+
+      button.disabled = true;
+      button.innerText = "SAVING...";
+      status.innerText = "Saving password globally...";
+
+      userPasswordRef.set({
+        password: newPassword,
+        updatedAt: Date.now()
+      }).then(() => {
+        status.innerText = "Saved. This is now the password for all users.";
+        input.value = "";
+
+        setTimeout(() => {
+          hidePasswordChanger();
+        }, 900);
+      }).catch(() => {
+        status.innerText = "Could not save password.";
+      }).finally(() => {
+        button.disabled = false;
+        button.innerText = "SAVE NEW PASSWORD";
+      });
+    }
+
     function saveModeratorLink() {
       const input = document.getElementById("moderatorLinkInput");
       const status = document.getElementById("saveStatus");
+      const button = document.getElementById("saveLinkButton");
+
       const link = String(input.value || "").trim();
 
       if (!link.startsWith("http://") && !link.startsWith("https://")) {
@@ -634,6 +838,8 @@
         return;
       }
 
+      button.disabled = true;
+      button.innerText = "SAVING...";
       status.innerText = "Saving...";
 
       meetingLinkRef.set({
@@ -643,6 +849,9 @@
         status.innerText = "Saved.";
       }).catch(() => {
         status.innerText = "Could not save.";
+      }).finally(() => {
+        button.disabled = false;
+        button.innerText = "SAVE LINK";
       });
     }
 
