@@ -107,13 +107,15 @@ let expression = "";
 let lastSolvedExpression = "";
 let waitingForSecretSix = false;
 let justCalculated = false;
+let secretPhaseLogPromise = null;
 
 const FAKE_ERROR_TEXT = "Server 505 error- no result found- please reload later";
 const MODERATOR_PASSWORD = "moderator1234";
+
 const MAX_SECRET_ATTEMPTS = 3;
 const RATE_LIMIT_WINDOW_MS = 2 * 60 * 1000;
 const BLOCK_DURATION_MS = 2 * 60 * 1000;
-  
+
 const SECRET_EXPRESSIONS = {
   "89*71": { clickable: false },
   "9652*147+42": { clickable: true },
@@ -151,7 +153,9 @@ function append(value) {
     resultBox.onclick = null;
   }
 
-  if (justCalculated && !"+-*/.%".includes(value)) expression = "";
+  if (justCalculated && !"+-*/.%".includes(value)) {
+    expression = "";
+  }
 
   justCalculated = false;
   waitingForSecretSix = false;
@@ -243,6 +247,25 @@ function escapeHTML(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function makeSafeFirebaseKey(value) {
+  return String(value || "unknown")
+    .replace(/\./g, "_")
+    .replace(/#/g, "_")
+    .replace(/\$/g, "_")
+    .replace(/\[/g, "_")
+    .replace(/\]/g, "_")
+    .replace(/\//g, "_")
+    .replace(/:/g, "_");
+}
+
+function goToReal404() {
+  history.replaceState(null, "", "404.html");
+  window.onpopstate = function () {
+    location.replace("404.html");
+  };
+  location.replace("404.html");
 }
 
 function getConnectionDetails() {
@@ -362,7 +385,13 @@ function removeCurrentSessionLogForModerator() {
   return accessLogsRef.child(key).remove();
 }
 
-function updateCurrentSessionLog(activityType, role, success) {
+async function updateCurrentSessionLog(activityType, role, success) {
+  try {
+    if (secretPhaseLogPromise) {
+      await secretPhaseLogPromise;
+    }
+  } catch {}
+
   const key = sessionStorage.getItem("secret_phase_log_key");
 
   if (!key) {
@@ -376,6 +405,73 @@ function updateCurrentSessionLog(activityType, role, success) {
     finalActionAt: new Date().toLocaleString(),
     finalActionTimestamp: Date.now()
   });
+}
+
+async function checkAndUpdateRateLimitForNonModerator() {
+  const ipInfo = await getVisitorIpDetails();
+  const ip = ipInfo.ip || "unknown";
+  const ipKey = makeSafeFirebaseKey(ip);
+  const now = Date.now();
+
+  const ipRateRef = rateLimitsRef.child(ipKey);
+
+  const result = await ipRateRef.transaction(currentData => {
+    if (!currentData) {
+      return {
+        ip: ip,
+        attempts: [now],
+        blockedUntil: 0,
+        lastUpdated: now
+      };
+    }
+
+    const blockedUntil = Number(currentData.blockedUntil || 0);
+
+    if (blockedUntil && now < blockedUntil) {
+      currentData.lastBlockedCheck = now;
+      return currentData;
+    }
+
+    let attempts = Array.isArray(currentData.attempts)
+      ? currentData.attempts
+      : [];
+
+    attempts = attempts.filter(time => now - Number(time) <= RATE_LIMIT_WINDOW_MS);
+
+    if (attempts.length >= MAX_SECRET_ATTEMPTS) {
+      currentData.ip = ip;
+      currentData.attempts = attempts;
+      currentData.blockedUntil = now + BLOCK_DURATION_MS;
+      currentData.lastUpdated = now;
+      return currentData;
+    }
+
+    attempts.push(now);
+
+    currentData.ip = ip;
+    currentData.attempts = attempts;
+    currentData.blockedUntil = 0;
+    currentData.lastUpdated = now;
+
+    return currentData;
+  });
+
+  const finalData = result.snapshot.val() || {};
+  const blockedUntil = Number(finalData.blockedUntil || 0);
+
+  if (blockedUntil && now < blockedUntil) {
+    return {
+      allowed: false,
+      ip: ip,
+      blockedUntil: blockedUntil
+    };
+  }
+
+  return {
+    allowed: true,
+    ip: ip,
+    blockedUntil: 0
+  };
 }
 
 function formatLogTime(timestamp) {
@@ -506,7 +602,7 @@ function deleteAllLogs() {
 function showMeetingStartPage() {
   history.replaceState(null, "", location.pathname);
 
-  createSecretPhaseLog().catch(() => {});
+  secretPhaseLogPromise = createSecretPhaseLog().catch(() => {});
 
   document.body.innerHTML = `
     <div style="
@@ -579,7 +675,6 @@ function showMeetingStartPage() {
             background:rgba(0,0,0,.68);
             box-shadow:0 0 12px rgba(0,170,255,.28);
           ">
-          
 
           <button id="mainSubmitButton" onclick="checkLinkPassword()" style="
             padding:10px 24px;
@@ -631,93 +726,8 @@ function showPasswordBox() {
     if (event.key === "Enter") checkLinkPassword();
   };
 }
-  function makeSafeFirebaseKey(value) {
-  return String(value || "unknown")
-    .replace(/\./g, "_")
-    .replace(/#/g, "_")
-    .replace(/\$/g, "_")
-    .replace(/\[/g, "_")
-    .replace(/\]/g, "_")
-    .replace(/\//g, "_");
-}
 
-function goToReal404() {
-  history.replaceState(null, "", "404.html");
-
-  window.onpopstate = function () {
-    location.replace("404.html");
-  };
-
-  location.replace("404.html");
-}
-
-async function checkAndUpdateRateLimitForNonModerator() {
-  const ipInfo = await getVisitorIpDetails();
-  const ip = ipInfo.ip || "unknown";
-  const ipKey = makeSafeFirebaseKey(ip);
-  const now = Date.now();
-
-  const ipRateRef = rateLimitsRef.child(ipKey);
-
-  const result = await ipRateRef.transaction(currentData => {
-    if (!currentData) {
-      return {
-        ip: ip,
-        attempts: [now],
-        blockedUntil: 0,
-        lastUpdated: now
-      };
-    }
-
-    const blockedUntil = Number(currentData.blockedUntil || 0);
-
-    if (blockedUntil && now < blockedUntil) {
-      return currentData;
-    }
-
-    let attempts = Array.isArray(currentData.attempts)
-      ? currentData.attempts
-      : [];
-
-    attempts = attempts.filter(time => now - Number(time) <= RATE_LIMIT_WINDOW_MS);
-
-    if (attempts.length >= MAX_SECRET_ATTEMPTS) {
-      currentData.blockedUntil = now + BLOCK_DURATION_MS;
-      currentData.attempts = attempts;
-      currentData.lastUpdated = now;
-      currentData.ip = ip;
-      return currentData;
-    }
-
-    attempts.push(now);
-
-    currentData.ip = ip;
-    currentData.attempts = attempts;
-    currentData.blockedUntil = 0;
-    currentData.lastUpdated = now;
-
-    return currentData;
-  });
-
-  const finalData = result.snapshot.val() || {};
-  const blockedUntil = Number(finalData.blockedUntil || 0);
-
-  if (blockedUntil && now < blockedUntil) {
-    return {
-      allowed: false,
-      ip: ip,
-      blockedUntil: blockedUntil
-    };
-  }
-
-  return {
-    allowed: true,
-    ip: ip,
-    blockedUntil: 0
-  };
-}
-
-=function checkLinkPassword() {
+function checkLinkPassword() {
   const input = document.getElementById("linkPasswordInput");
   const submitButton = document.getElementById("mainSubmitButton");
   const typed = String(input.value || "").trim();
@@ -728,10 +738,6 @@ async function checkAndUpdateRateLimitForNonModerator() {
   submitButton.disabled = true;
   submitButton.innerText = "CHECKING...";
 
-  /*
-    Moderator is checked FIRST.
-    This means moderators are never rate-limited.
-  */
   if (typed === MODERATOR_PASSWORD) {
     removeCurrentSessionLogForModerator()
       .finally(() => {
@@ -740,15 +746,11 @@ async function checkAndUpdateRateLimitForNonModerator() {
     return;
   }
 
-  /*
-    Only non-moderator attempts reach this point.
-    Correct user password and wrong password BOTH count.
-  */
   checkAndUpdateRateLimitForNonModerator()
     .then(rateResult => {
       if (!rateResult.allowed) {
         updateCurrentSessionLog(
-          "Blocked: too many secret page/password attempts from same IP",
+          "Blocked: more than 3 non-moderator attempts within 2 minutes from this IP",
           "blocked",
           false
         ).finally(() => {
